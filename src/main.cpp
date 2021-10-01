@@ -104,24 +104,26 @@ void loop() {
   if(previousDist == distance || previousDist == distance-1 || previousDist == distance+1 ) {
     checking = true;
     time = millis();
-
+  
   } else if(previousDist != distance){
     checking = false;
     time = 0;
     Serial.print("Distance: ");
     Serial.println(distance);
   }
-
+  /// When car is hold still for fewer seconds then the car is stated as parked.
   if(time < millis() + 10000 && time!= 0){
     parkState = true;
     parkSecond++;
+    /// If parked then print Parked and save data to EEPROM one Time only.
     if(parkState && parkSecond <= 1){
     Serial.println("parked");
     lastParked = "Last Parked in "+ distance ;
+    /// Saving data to EEPROM using Function that saves.
     saveStringToEEPROM(0,lastParked);
     }
     delay(1000);
-
+    /// When Car is Parked Buzzer should be turned off.
     digitalWrite(buzzer, LOW);
   }else{
     parkSecond = 0;
@@ -130,8 +132,9 @@ void loop() {
   
   previousDist = distance;
 }
-// Save String To EEPROM Method.
+/// Save String To EEPROM Method.
 void saveStringToEEPROM(int address, const String data) {
+  ///First it will save the length of the string and write the string.
   byte lengthOfString = data.length();
   EEPROM.write(address, lengthOfString);
 
@@ -141,7 +144,7 @@ void saveStringToEEPROM(int address, const String data) {
   }
 }
 
-// Read string from EEPROM Method.
+/// Read string from EEPROM Method.
 String readStringFromEEPROM(int address) {
   int newStringLength = EEPROM.read(address);
   char data[newStringLength + 1];
