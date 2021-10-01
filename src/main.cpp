@@ -2,6 +2,7 @@
 /// ---  includes --- ///
 /// --- --------- --- ///
 #include <Arduino.h>
+#include<EEPROM.h>
 ///------------------------------------------------------------------------includes///
 
 /// --- --------- --- ///
@@ -30,8 +31,11 @@ int checkDist[5];
 int currentCheckDist = 0;
 
 boolean checking = false;
+boolean parkState = false;
 unsigned long time = 0;
 int previousDist = 0;
+int parkSecond = 0;
+String lastParked; /// A variable to save last parked Distance.
 ///------------------------------------------------------------------------properties///
 
 
@@ -42,6 +46,8 @@ void setup() {
   pinMode(buzzer,OUTPUT); /// Sets the ✨buzzer✨ Pin to expect Input
   pinMode(led,OUTPUT);    /// Sets the ✨led✨ Pin to expect Input
   Serial.begin(9600);     /// The serial communication starts. With Baud Rate(data symbols per second) 9600
+  String LastParked = readStringFromEEPROM(0); /// Receive last parked data from the EEPROM.
+  Serial.println(LastParked); /// Print LastParked Data.
 }
 
 void loop() {
@@ -107,11 +113,42 @@ void loop() {
   }
 
   if(time < millis() + 10000 && time!= 0){
+    parkState = true;
+    parkSecond++;
+    if(parkState && parkSecond <= 1){
     Serial.println("parked");
+    lastParked = "Last Parked in "+ distance ;
+    saveStringToEEPROM(0,lastParked);
+    }
     delay(1000);
+
     digitalWrite(buzzer, LOW);
+  }else{
+    parkSecond = 0;
   }
 
   
   previousDist = distance;
+}
+// Save String To EEPROM Method.
+void saveStringToEEPROM(int address, const String data) {
+  byte lengthOfString = data.length();
+  EEPROM.write(address, lengthOfString);
+
+  for (int i = 0; i < lengthOfString; i++) {
+    EEPROM.write(address + 1 + i, data[i]);
+
+  }
+}
+
+// Read string from EEPROM Method.
+String readStringFromEEPROM(int address) {
+  int newStringLength = EEPROM.read(address);
+  char data[newStringLength + 1];
+
+  for (int i = 0; i < newStringLength; i++) {
+    data[i] = EEPROM.read(address + 1 + i);
+  }
+  data[newStringLength] = '\0';
+  return String(data);
 }
